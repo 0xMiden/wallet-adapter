@@ -79,6 +79,61 @@ function getPackageInfo(directory) {
   };
 }
 
+/**
+ * Resolve "workspace:^" references in dependencies to real version ranges.
+ * Reads each workspace package's version and replaces "workspace:^" with "^<version>".
+ * Writes updated package.json before publish, restores original after.
+ */
+function resolveWorkspaceDeps(directory) {
+  const packageJsonPath = path.resolve(directory, 'package.json');
+  const original = fs.readFileSync(packageJsonPath, 'utf8');
+  const pkg = JSON.parse(original);
+  let changed = false;
+
+  for (const depType of ['dependencies', 'devDependencies', 'peerDependencies']) {
+    const deps = pkg[depType];
+    if (!deps) continue;
+    for (const [name, version] of Object.entries(deps)) {
+      if (typeof version === 'string' && version.startsWith('workspace:')) {
+        // Find the workspace package to get its real version
+        const realVersion = findWorkspacePackageVersion(name);
+        if (!realVersion) {
+          throw new Error(`Cannot resolve workspace dependency "${name}" — package not found in workspace`);
+        }
+        const prefix = version.replace('workspace:', '');
+        deps[name] = prefix === '^' ? `^${realVersion}` : prefix === '~' ? `~${realVersion}` : realVersion;
+        changed = true;
+      }
+    }
+  }
+
+  if (changed) {
+    fs.writeFileSync(packageJsonPath, JSON.stringify(pkg, null, 2) + '\n', 'utf8');
+    console.log(`Resolved workspace:^ dependencies in ${directory}`);
+  }
+
+  return { original, changed, packageJsonPath };
+}
+
+function restorePackageJson({ original, changed, packageJsonPath }) {
+  if (changed) {
+    fs.writeFileSync(packageJsonPath, original, 'utf8');
+    console.log(`Restored original package.json in ${path.dirname(packageJsonPath)}`);
+  }
+}
+
+function findWorkspacePackageVersion(packageName) {
+  for (const level of buildOrder) {
+    for (const dir of level) {
+      try {
+        const info = getPackageInfo(dir);
+        if (info.name === packageName) return info.version;
+      } catch (_) {}
+    }
+  }
+  return null;
+}
+
 function checkIfVersionExists(packageName, version) {
   return new Promise((resolve, reject) => {
     exec(`npm view ${packageName}@${version} version`, (error, stdout, stderr) => {
@@ -163,20 +218,28 @@ async function publishPackages() {
           await runCommand(dir, cmd);
         }
 
-        // Handle npm publish separately to include OTP
-        if (isDryRun) {
-          console.log(`DRY RUN: Would publish ${packageName}@${packageVersion}`);
-          await runInteractiveCommand(dir, `npm publish --dry-run --access=public`);
-          console.log(`DRY RUN: Validation successful for ${packageName}@${packageVersion}`);
-          packageUpdates.push(`${packageName}: New version ${packageVersion} (dry-run)`);
-          return { published: true, packageName, packageVersion };
-        } else {
-          console.log(`Publishing ${packageName}@${packageVersion}...`);
-          const otpFlag = otp ? ` --otp=${otp}` : '';
-          await runInteractiveCommand(dir, `npm publish${otpFlag} --access=public`);
-          console.log(`Successfully published ${packageName}@${packageVersion}`);
-          packageUpdates.push(`${packageName}: New version ${packageVersion}`);
-          return { published: true, packageName, packageVersion };
+        // Resolve workspace:^ deps to real versions before publishing
+        const backup = resolveWorkspaceDeps(dir);
+
+        try {
+          // Handle npm publish separately to include OTP
+          if (isDryRun) {
+            console.log(`DRY RUN: Would publish ${packageName}@${packageVersion}`);
+            await runInteractiveCommand(dir, `npm publish --dry-run --access=public`);
+            console.log(`DRY RUN: Validation successful for ${packageName}@${packageVersion}`);
+            packageUpdates.push(`${packageName}: New version ${packageVersion} (dry-run)`);
+            return { published: true, packageName, packageVersion };
+          } else {
+            console.log(`Publishing ${packageName}@${packageVersion}...`);
+            const otpFlag = otp ? ` --otp=${otp}` : '';
+            await runInteractiveCommand(dir, `npm publish${otpFlag} --access=public`);
+            console.log(`Successfully published ${packageName}@${packageVersion}`);
+            packageUpdates.push(`${packageName}: New version ${packageVersion}`);
+            return { published: true, packageName, packageVersion };
+          }
+        } finally {
+          // Always restore original package.json (keep workspace:^ for local dev)
+          restorePackageJson(backup);
         }
       } catch (error) {
         console.error(`Failed to process ${dir}:`, error.message);
