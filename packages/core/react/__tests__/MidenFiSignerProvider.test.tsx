@@ -289,24 +289,24 @@ describe('MidenFiSignerProvider', () => {
       expect(typeof result.current.select).toBe('function');
     });
 
-    it('autoConnect defaults to true', () => {
+    it('autoConnect defaults to false', () => {
       const { result } = renderHook(() => useMidenFiWallet(), {
         wrapper: ({ children }) => (
           <MidenFiSignerProvider>{children}</MidenFiSignerProvider>
         ),
       });
 
-      expect(result.current.autoConnect).toBe(true);
+      expect(result.current.autoConnect).toBe(false);
     });
 
-    it('autoConnect can be set to false', () => {
+    it('autoConnect can be set to true', () => {
       const { result } = renderHook(() => useMidenFiWallet(), {
         wrapper: ({ children }) => (
-          <MidenFiSignerProvider autoConnect={false}>{children}</MidenFiSignerProvider>
+          <MidenFiSignerProvider autoConnect={true}>{children}</MidenFiSignerProvider>
         ),
       });
 
-      expect(result.current.autoConnect).toBe(false);
+      expect(result.current.autoConnect).toBe(true);
     });
 
     it('exposes createAccount from adapter', () => {

@@ -1,6 +1,6 @@
 {
   "name": "@miden-sdk/miden-wallet-adapter",
-  "version": "0.13.4",
+  "version": "0.13.5",
   "description": "Modular TypeScript wallet adapters and React components for Miden applications.",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",

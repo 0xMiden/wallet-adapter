@@ -88,7 +88,7 @@ export interface MidenFiSignerProviderProps {
   appName?: string;
   /** Network to connect to */
   network?: WalletAdapterNetwork;
-  /** Auto-connect to previously selected wallet on mount. Defaults to true */
+  /** Auto-connect to previously selected wallet on mount. Defaults to false */
   autoConnect?: boolean;
   /** Private data permission level */
   privateDataPermission?: PrivateDataPermission;
@@ -171,7 +171,7 @@ export const MidenFiSignerProvider: FC<MidenFiSignerProviderProps> = ({
   wallets: walletsProp,
   appName = 'Miden DApp',
   network = WalletAdapterNetwork.Testnet,
-  autoConnect = true,
+  autoConnect = false,
   privateDataPermission = PrivateDataPermission.UponRequest,
   allowedPrivateData = AllowedPrivateData.None,
   onError,
@@ -603,8 +603,8 @@ export const MidenFiSignerProvider: FC<MidenFiSignerProviderProps> = ({
     storeName: '',
     name: 'MidenFi',
     isConnected: false,
-    connect: connectRef.current,
-    disconnect: disconnectRef.current,
+    connect: async () => { await connectRef.current(); },
+    disconnect: async () => { await disconnectRef.current(); },
   });
 
   // The connected context ref — reused across renders to maintain referential identity.
