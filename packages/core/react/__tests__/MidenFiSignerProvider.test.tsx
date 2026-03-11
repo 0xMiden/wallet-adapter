@@ -7,7 +7,7 @@ const createMockAdapter = (overrides = {}) => {
   const listeners: Record<string, Function[]> = {};
   return {
     name: 'Miden Wallet',
-    url: 'https://miden.fi/',
+    url: 'https://chromewebstore.google.com/detail/miden-wallet/ablmompanofnodfdkgchkpmphailefpb',
     icon: 'icon-data',
     readyState: 'Unsupported',
     connected: false,
