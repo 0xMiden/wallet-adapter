@@ -2313,6 +2313,28 @@ __metadata:
   languageName: node
   linkType: hard
 
+"discover-miden-example@workspace:examples/discover-miden":
+  version: 0.0.0-use.local
+  resolution: "discover-miden-example@workspace:examples/discover-miden"
+  dependencies:
+    "@miden-sdk/miden-sdk": "npm:^0.13.1"
+    "@miden-sdk/miden-wallet-adapter-base": "workspace:^"
+    "@miden-sdk/miden-wallet-adapter-miden": "workspace:^"
+    "@miden-sdk/miden-wallet-adapter-react": "workspace:^"
+    "@miden-sdk/miden-wallet-adapter-reactui": "workspace:^"
+    "@types/react": "npm:^19.2.0"
+    "@types/react-dom": "npm:^19.2.0"
+    "@vitejs/plugin-react": "npm:^5.1.1"
+    react: "npm:^19.2.0"
+    react-dom: "npm:^19.2.0"
+    typescript: "npm:~5.8.3"
+    vite: "npm:^6.2.0"
+    vite-plugin-node-polyfills: "npm:^0.24.0"
+    vite-plugin-top-level-await: "npm:^1.6.0"
+    vite-plugin-wasm: "npm:^3.5.0"
+  languageName: unknown
+  linkType: soft
+
 "dom-accessibility-api@npm:^0.5.9":
   version: 0.5.16
   resolution: "dom-accessibility-api@npm:0.5.16"
