@@ -244,27 +244,17 @@ export const WalletModal: FC<WalletModalProps> = ({
               <>
                 <div className="wallet-adapter-modal-middle">
                   <DiscoverMidenMessage />
-                  <button
-                    type="button"
-                    className="wallet-adapter-modal-middle-button"
-                    onClick={(event) =>
-                      handleWalletClick(event, getStartedWallet.adapter.name)
-                    }
+                  <a
+                    href={getStartedWallet.adapter.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="wallet-adapter-modal-chrome-badge"
                   >
-                    Install Miden Wallet
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="25"
-                      height="24"
-                      viewBox="0 0 25 24"
-                      fill="none"
-                    >
-                      <path
-                        d="M10.1003 5L8.5 6.5745L13.6981 11.7L8.5 16.8255L10.1003 18.4L16.91 11.7L10.1003 5Z"
-                        fill="white"
-                      />
-                    </svg>
-                  </button>
+                    <img
+                      src="https://developer.chrome.com/static/docs/webstore/branding/image/HRs9MPufa1J1h5glNhut.png"
+                      alt="Available in the Chrome Web Store"
+                    />
+                  </a>
                 </div>
               </>
             )}

@@ -1,10 +1,10 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { nodePolyfills } from 'vite-plugin-node-polyfills';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import wasm from 'vite-plugin-wasm';
 import topLevelAwait from 'vite-plugin-top-level-await';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const packages = path.resolve(__dirname, '..', '..', 'packages');
@@ -32,9 +32,8 @@ export default defineConfig({
       '@miden-sdk/miden-wallet-adapter-reactui/styles.css': path.resolve(packages, 'ui', 'styles.css'),
       '@miden-sdk/miden-wallet-adapter-reactui': path.resolve(packages, 'ui', 'src', 'index.ts'),
       '@miden-sdk/miden-sdk': path.resolve(__dirname, '..', '..', 'node_modules', '@miden-sdk', 'miden-sdk'),
-      '@miden-sdk/react': path.resolve(__dirname, '..', '..', 'node_modules', '@miden-sdk', 'react'),
     },
-    dedupe: ['@miden-sdk/miden-sdk', '@miden-sdk/react', 'react', 'react-dom'],
+    dedupe: ['@miden-sdk/miden-sdk', 'react', 'react-dom'],
   },
   worker: {
     format: 'es',

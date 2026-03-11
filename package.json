@@ -7,7 +7,8 @@
     "packages/ui",
     "packages/wallets/miden",
     "packages/all",
-    "examples/react-signer"
+    "examples/react-signer",
+    "examples/discover-miden"
   ],
   "packageManager": "yarn@4.9.3",
   "scripts": {
