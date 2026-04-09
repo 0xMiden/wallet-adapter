@@ -104,6 +104,8 @@ export interface MidenFiSignerProviderProps {
   storageMode?: 'private' | 'public' | 'network';
   /** Custom account components to include in the account (e.g. from a compiled .masp package) */
   customComponents?: AccountComponent[];
+  /** Existing account ID to import instead of creating a new account */
+  importAccountId?: string;
 }
 
 const initialState: {
@@ -179,6 +181,7 @@ export const MidenFiSignerProvider: FC<MidenFiSignerProviderProps> = ({
   accountType = 'RegularAccountImmutableCode',
   storageMode = 'public',
   customComponents,
+  importAccountId,
 }) => {
   // Create default wallets if not provided
   const adapters = useMemo(
@@ -645,6 +648,7 @@ export const MidenFiSignerProvider: FC<MidenFiSignerProviderProps> = ({
               accountType,
               storageMode: resolvedStorageMode,
               ...(customComponents?.length ? { customComponents } : {}),
+              ...(importAccountId ? { importAccountId } : {}),
             },
             storeName: `midenfi_${address}`,
             name: 'MidenFi',
@@ -669,7 +673,7 @@ export const MidenFiSignerProvider: FC<MidenFiSignerProviderProps> = ({
     return () => {
       cancelled = true;
     };
-  }, [connected, publicKey, address, accountType, storageMode, customComponents]);
+  }, [connected, publicKey, address, accountType, storageMode, customComponents, importAccountId]);
 
   const walletContextValue = useMemo(
     () => ({

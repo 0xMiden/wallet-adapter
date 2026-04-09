@@ -1,6 +1,6 @@
 {
   "name": "@miden-sdk/miden-wallet-adapter-reactui",
-  "version": "0.13.6",
+  "version": "0.14.0",
   "description": "React UI Components for connecting Miden-compatible wallets to your dApp.",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
