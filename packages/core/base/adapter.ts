@@ -127,9 +127,6 @@ export function scopePollingDetectionStrategy(detect: () => boolean): void {
     document.addEventListener('DOMContentLoaded', detectAndDispose, {
       once: true,
     });
-    disposers.push(() =>
-      document.removeEventListener('DOMContentLoaded', detectAndDispose)
-    );
   }
 
   // Strategy #3: Detect after the `window` has fully loaded.
@@ -138,7 +135,6 @@ export function scopePollingDetectionStrategy(detect: () => boolean): void {
     document.readyState !== 'complete'
   ) {
     window.addEventListener('load', detectAndDispose, { once: true });
-    disposers.push(() => window.removeEventListener('load', detectAndDispose));
   }
 
   // Strategy #4: Detect synchronously, now.
