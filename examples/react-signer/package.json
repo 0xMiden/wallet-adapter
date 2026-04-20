@@ -9,11 +9,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@miden-sdk/miden-sdk": "^0.14.0",
+    "@miden-sdk/miden-sdk": "^0.14.4",
     "@miden-sdk/miden-wallet-adapter-base": "workspace:^",
     "@miden-sdk/miden-wallet-adapter-miden": "workspace:^",
     "@miden-sdk/miden-wallet-adapter-react": "workspace:^",
-    "@miden-sdk/react": "^0.14.0",
+    "@miden-sdk/react": "^0.14.4",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },

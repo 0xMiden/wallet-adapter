@@ -1,6 +1,6 @@
 {
   "name": "@miden-sdk/miden-wallet-adapter-miden",
-  "version": "0.14.1",
+  "version": "0.14.2",
   "description": "Miden wallet adapter for the Miden Wallet.",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
