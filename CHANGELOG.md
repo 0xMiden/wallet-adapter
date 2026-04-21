@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-04-21
+
+### Fixes
+
+* `MidenFiSignerProvider` now always passes the wallet's `address` as `importAccountId` in the signer context's `accountConfig`, so `@miden-sdk/react`'s `initializeSignerAccount` takes the import-by-id branch instead of trying to rebuild the account from scratch locally. The rebuild path hits an `invalid enum value passed` error in `@miden-sdk/react` <= 0.14.4 (it reads `AuthScheme.AuthEcdsaK256Keccak`, which doesn't exist on the public `AuthScheme` constant — a client-side bug fixed in the unreleased 0.14.5). Importing by ID is also the semantically correct flow: the wallet already owns the account, and its bech32 address *is* the on-chain account ID. Consumers can still override via the `importAccountId` prop.
+
+### New Versions
+
+* `0.14.3` for all packages
+
 ## 2026-02-09
 
 ### Features

@@ -641,6 +641,14 @@ export const MidenFiSignerProvider: FC<MidenFiSignerProviderProps> = ({
 
           const resolvedStorageMode = AccountStorageMode.tryFromStr(storageMode);
 
+          // Always hand the wallet's existing account ID to `initializeSignerAccount`
+          // so it takes the import-by-id branch. The wallet already owns the account
+          // (the bech32 `address` IS the on-chain account ID); reconstructing it
+          // locally would require knowing every creation parameter the wallet used
+          // (seed, auth scheme, storage mode, components) and would also hit a
+          // broken `AuthScheme.AuthEcdsaK256Keccak` lookup in `@miden-sdk/react`
+          // <= 0.14.4. Consumers can still override by passing an explicit
+          // `importAccountId` prop (e.g. to pin to a non-default account).
           const ctx: SignerContextValue = {
             signCb,
             accountConfig: {
@@ -648,7 +656,7 @@ export const MidenFiSignerProvider: FC<MidenFiSignerProviderProps> = ({
               accountType,
               storageMode: resolvedStorageMode,
               ...(customComponents?.length ? { customComponents } : {}),
-              ...(importAccountId ? { importAccountId } : {}),
+              importAccountId: importAccountId ?? address,
             },
             storeName: `midenfi_${address}`,
             name: 'MidenFi',
