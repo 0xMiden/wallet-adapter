@@ -77,7 +77,7 @@ function SendComponent() {
     );
 
     try {
-      await wallet.adapter.requestSend(transaction);
+      await (wallet.adapter as MidenWalletAdapter).requestSend(transaction);
       console.log('Transaction sent successfully!');
     } catch (error) {
       console.error('Transaction failed:', error);
@@ -128,7 +128,7 @@ import { useWallet } from '@miden-sdk/miden-wallet-adapter';
 function AssetsAndNotesComponent() {
   const { wallet, address, requestAssets, requestPrivateNotes } = useWallet();
 
-  const getAssetsAndNotes() = async () => {
+  const getAssetsAndNotes = async () => {
     if (!wallet || !address) return;
 
     // { faucetId: string, amount: string }[]
