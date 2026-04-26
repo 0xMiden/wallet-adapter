@@ -34,6 +34,23 @@ export interface MessageSignerWalletAdapterProps<Name extends string = string>
   signBytes(data: Uint8Array, kind: SignKind): Promise<Uint8Array>;
   importPrivateNote(note: Uint8Array): Promise<string>;
   requestConsumableNotes(): Promise<InputNoteDetails[]>;
+  /**
+   * Return serialized NoteFile bytes (NoteFile.serialize() output) for the
+   * user's private notes. When `noteIds` is omitted or empty, returns ALL
+   * the user's private notes for this dApp. When provided, returns only the
+   * matching subset. Used by the React adapter's ingestState backfill so the
+   * dApp's local MidenClient can ingest private notes (which never appear in
+   * chain state) and treat them like any other note.
+   *
+   * IMPORTANT: this method MUST be silent — never prompt the user. If the
+   * dApp does not yet hold the necessary permission, return an empty array
+   * (NOT an error). Permission elevation flows through `requestPrivateNotes`,
+   * which IS allowed to prompt.
+   *
+   * Optional — adapters without private-note state may omit. The React
+   * adapter guards on capability presence before invoking.
+   */
+  requestPrivateNoteBytes?(noteIds?: string[]): Promise<Uint8Array[]>;
   waitForTransaction(
     txId: string,
     timeout?: number

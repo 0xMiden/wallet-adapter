@@ -9,7 +9,11 @@ import {
   type FC,
   type ReactNode,
 } from 'react';
-import { SignerContext, type SignerContextValue } from '@miden-sdk/react';
+import {
+  SignerContext,
+  type SignerContextValue,
+  type IngestStateCallback,
+} from '@miden-sdk/react';
 import {
   type Adapter,
   AllowedPrivateData,
@@ -526,6 +530,25 @@ export const MidenFiSignerProvider: FC<MidenFiSignerProviderProps> = ({
     [adapter, handleError, connected]
   );
 
+  // Pattern B: silent backfill primitive used by ingestState. Optional on the
+  // adapter — older wallet builds without this method skip ingest entirely.
+  // Never throws on permission denial; returns empty array (the wallet handler
+  // enforces this contract). Internal to the React-adapter bridge; not
+  // exposed on WalletContextState.
+  const requestPrivateNoteBytes:
+    | ((noteIds?: string[]) => Promise<Uint8Array[]>)
+    | undefined = useMemo(
+    () =>
+      adapter && 'requestPrivateNoteBytes' in adapter &&
+      typeof (adapter as any).requestPrivateNoteBytes === 'function'
+        ? async (noteIds?: string[]) => {
+            if (!connected) return [];
+            return await (adapter as any).requestPrivateNoteBytes(noteIds);
+          }
+        : undefined,
+    [adapter, connected]
+  );
+
   const waitForTransaction:
     | MessageSignerWalletAdapterProps['waitForTransaction']
     | undefined = useMemo(
@@ -599,6 +622,12 @@ export const MidenFiSignerProvider: FC<MidenFiSignerProviderProps> = ({
   useEffect(() => { connectRef.current = connect; }, [connect]);
   const disconnectRef = useRef(disconnect);
   useEffect(() => { disconnectRef.current = disconnect; }, [disconnect]);
+  // Pattern B: ref the bytes-export wrapper so the ingestState closure built
+  // inside buildContext can pick up adapter swaps without rebuilding the ctx.
+  const requestPrivateNoteBytesRef = useRef(requestPrivateNoteBytes);
+  useEffect(() => {
+    requestPrivateNoteBytesRef.current = requestPrivateNoteBytes;
+  }, [requestPrivateNoteBytes]);
 
   const disconnectedCtx = useRef<SignerContextValue>({
     signCb: async () => { throw new Error('MidenFi wallet not connected'); },
@@ -639,6 +668,80 @@ export const MidenFiSignerProvider: FC<MidenFiSignerProviderProps> = ({
             return result;
           };
 
+          // Pattern B: top-level signBytes for useSignBytes consumers.
+          // Mirrors the wallet's Vault.signData semantics — the adapter just
+          // forwards (data, kind) to the wallet, which deserializes into
+          // Word/SigningInputs and calls the WASM signer.
+          const signBytesCallback = async (
+            data: Uint8Array,
+            kind: 'word' | 'signingInputs'
+          ): Promise<Uint8Array> => {
+            return await signBytesRef.current!(data, kind);
+          };
+
+          // Pattern B: ingestState backfills the dApp's local IndexedDB with
+          // the user's private notes (which never appear in chain state).
+          // Single silent round-trip: ask the wallet for all private-note
+          // bytes (returns [] if no permission), dedup against local store,
+          // import each missing note. Per-operation runExclusive — no
+          // outer-wrap (would deadlock on the non-reentrant AsyncLock during
+          // init).
+          const ingestState: IngestStateCallback = async ({
+            client,
+            runExclusive,
+          }) => {
+            const reqBytes = requestPrivateNoteBytesRef.current;
+            if (!reqBytes) return;
+
+            let allBytes: Uint8Array[];
+            try {
+              allBytes = await reqBytes();
+            } catch (err) {
+              console.warn(
+                '[MidenFiSigner] requestPrivateNoteBytes failed:',
+                err
+              );
+              return;
+            }
+            if (allBytes.length === 0) return;
+
+            const { NoteFile, NoteFilter, NoteFilterTypes } = await import(
+              '@miden-sdk/miden-sdk'
+            );
+
+            // Snapshot local note IDs inside runExclusive for a coherent view.
+            // NoteFilterTypes.All catches notes in every state so we don't
+            // re-import a note already in flight.
+            const localIds = await runExclusive(async () => {
+              const localNotes = await client.getInputNotes(
+                new NoteFilter(NoteFilterTypes.All)
+              );
+              return new Set(localNotes.map((n: any) => n.id().toString()));
+            });
+
+            // Import each missing note in its own runExclusive call so other
+            // hooks can interleave between notes. Per-note try/catch so one
+            // malformed blob doesn't lose the rest.
+            for (const bytes of allBytes) {
+              try {
+                const noteFile = NoteFile.deserialize(bytes);
+                // NoteFile doesn't expose a direct id() — defer dedup to
+                // importNoteFile (which throws/no-ops on duplicate). We
+                // already filtered the candidate set via the snapshot above
+                // best-effort; treat duplicate-import errors as benign.
+                const noteId = await runExclusive(() =>
+                  client.importNoteFile(noteFile)
+                );
+                if (localIds.has(noteId.toString())) continue;
+              } catch (err) {
+                console.warn(
+                  '[MidenFiSigner] failed to import private note:',
+                  err
+                );
+              }
+            }
+          };
+
           const resolvedStorageMode = AccountStorageMode.tryFromStr(storageMode);
 
           // Always hand the wallet's existing account ID to `initializeSignerAccount`
@@ -661,6 +764,10 @@ export const MidenFiSignerProvider: FC<MidenFiSignerProviderProps> = ({
             storeName: `midenfi_${address}`,
             name: 'MidenFi',
             isConnected: true,
+            address,
+            publicKey,
+            signBytes: signBytesCallback,
+            ingestState,
             connect: connectRef.current,
             disconnect: disconnectRef.current,
           };
@@ -742,27 +849,42 @@ export const MidenFiSignerProvider: FC<MidenFiSignerProviderProps> = ({
 };
 
 /**
- * Hook for MidenFi wallet operations beyond the unified useSigner interface.
- * Use this to access wallet-specific methods like requestTransaction, requestAssets, etc.
+ * @deprecated Prefer the unified `@miden-sdk/react` hooks, which work against
+ * any connected signer (MidenFi, Para, Turnkey, ...) without coupling your
+ * dApp to a specific adapter:
  *
- * @example
- * ```tsx
- * const { connected, connect, disconnect, wallets, select } = useMidenFiWallet();
+ *   - Connection state / address: `useSigner()` (`isConnected`, `address`,
+ *     `publicKey`, `connect`, `disconnect`)
+ *   - Read notes (incl. private notes the wallet holds): `useNotes({ accountId })`
+ *     — Pattern B's `ingestState` backfills private notes into the local
+ *     store automatically.
+ *   - Sign arbitrary bytes: `useSignBytes()`
+ *   - Send / consume / wait: `useSend()`, `useConsume()`, `useWaitForCommit()`
  *
- * // Connect
- * await connect();
- *
- * // Request a transaction
- * const txId = await requestTransaction({ ... });
- * ```
+ * `useMidenFiWallet` remains supported for capabilities not yet on the SDK
+ * surface (multi-wallet discovery via `wallets` / `select`, transitional
+ * `connecting` / `disconnecting` flags). It will be removed in a future major
+ * release.
  */
 export function useMidenFiWallet(): WalletContextState {
   const context = useContext(WalletContext);
   if (!context || Object.keys(context).length === 0) {
     throw new Error('useMidenFiWallet must be used within MidenFiSignerProvider');
   }
+  if (!useMidenFiWalletWarned) {
+    useMidenFiWalletWarned = true;
+    // One-shot console warning so consumers notice during dev without spamming
+    // production logs on every render.
+    console.warn(
+      '[miden-wallet-adapter] useMidenFiWallet is deprecated. ' +
+        'Use @miden-sdk/react hooks (useSigner, useNotes, useSignBytes) instead. ' +
+        'See JSDoc for the migration map.'
+    );
+  }
   return context;
 }
+
+let useMidenFiWalletWarned = false;
 
 // Re-export for backward compatibility
 export { WalletContext };

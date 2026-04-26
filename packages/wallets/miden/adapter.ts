@@ -60,6 +60,10 @@ export interface MidenWallet extends EventEmitter<MidenWalletEvents> {
   ): Promise<{ signature: Uint8Array }>;
   importPrivateNote(note: Uint8Array): Promise<{ noteId: string }>;
   requestConsumableNotes(): Promise<{ consumableNotes: InputNoteDetails[] }>;
+  // Optional — only present on wallet builds that support Pattern B ingestion.
+  // Returns base64-encoded NoteFile.serialize() bytes for the user's private
+  // notes. Silent: returns empty array if dApp lacks Auto+Notes permission.
+  requestPrivateNoteBytes?(noteIds?: string[]): Promise<{ bytes: string[] }>;
   createAccount(params?: CreateAccountParams): Promise<{ accountId: string }>;
   connect(
     privateDataPermission: PrivateDataPermission,
@@ -266,6 +270,33 @@ export class MidenWalletAdapter extends BaseMessageSignerWalletAdapter {
     } catch (error: any) {
       this.emit('error', error);
       throw error;
+    }
+  }
+
+  async requestPrivateNoteBytes(noteIds?: string[]): Promise<Uint8Array[]> {
+    // Capability gate: returns empty array if the wallet build doesn't
+    // support this method. The React adapter's ingestState already guards
+    // on adapter-level capability, but this defensive check makes the
+    // adapter usable from non-React consumers too.
+    const wallet = this._wallet;
+    if (!wallet || !this.address) throw new WalletNotConnectedError();
+    if (typeof wallet.requestPrivateNoteBytes !== 'function') {
+      return [];
+    }
+    try {
+      const result = await wallet.requestPrivateNoteBytes(noteIds);
+      // Wallet returns base64-encoded NoteFile.serialize() bytes; decode.
+      return result.bytes.map((b64) => {
+        const binStr = atob(b64);
+        const bytes = new Uint8Array(binStr.length);
+        for (let i = 0; i < binStr.length; i++) bytes[i] = binStr.charCodeAt(i);
+        return bytes;
+      });
+    } catch (error: any) {
+      // Silent contract: caller (ingestState) treats failures as best-effort.
+      // Still emit for diagnostics.
+      this.emit('error', error);
+      return [];
     }
   }
 
