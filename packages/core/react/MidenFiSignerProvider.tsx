@@ -742,14 +742,22 @@ export const MidenFiSignerProvider: FC<MidenFiSignerProviderProps> = ({
 
           const resolvedStorageMode = AccountStorageMode.tryFromStr(storageMode);
 
-          // Always hand the wallet's existing account ID to `initializeSignerAccount`
-          // so it takes the import-by-id branch. The wallet already owns the account
-          // (the bech32 `address` IS the on-chain account ID); reconstructing it
-          // locally would require knowing every creation parameter the wallet used
-          // (seed, auth scheme, storage mode, components) and would also hit a
-          // broken `AuthScheme.AuthEcdsaK256Keccak` lookup in `@miden-sdk/react`
-          // <= 0.14.4. Consumers can still override by passing an explicit
-          // `importAccountId` prop (e.g. to pin to a non-default account).
+          // Pass `importAccountId` only when the consumer explicitly provided
+          // one (e.g. to pin to a specific non-default wallet account). When
+          // unset, `@miden-sdk/react`'s `initializeSignerAccount` takes the
+          // build-from-publicKeyCommitment slow path and silently swallows
+          // "not found on the network" — which is the right behaviour for a
+          // wallet account that hasn't transacted yet (public-storage Miden
+          // accounts are only visible on chain after their first tx).
+          //
+          // Historical note: PR #81 (afe11d6) used to *always* set
+          // `importAccountId` because the slow path tripped a broken
+          // `AuthScheme.AuthEcdsaK256Keccak` lookup on `@miden-sdk/react`
+          // <= 0.14.4. That bug is fixed on HEAD (>= 0.14.5; see
+          // miden-client#2088 "expose resolveAuthScheme and fix external-
+          // keystore init"), and Pattern B's peer-dep bumps the SDK floor to
+          // 0.14.5 — so the workaround is no longer needed and was actively
+          // harmful for not-yet-published wallet accounts.
           const ctx: SignerContextValue = {
             signCb,
             accountConfig: {
@@ -757,7 +765,7 @@ export const MidenFiSignerProvider: FC<MidenFiSignerProviderProps> = ({
               accountType,
               storageMode: resolvedStorageMode,
               ...(customComponents?.length ? { customComponents } : {}),
-              importAccountId: importAccountId ?? address,
+              ...(importAccountId ? { importAccountId } : {}),
             },
             storeName: `midenfi_${address}`,
             name: 'MidenFi',
