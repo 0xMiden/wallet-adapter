@@ -2,8 +2,21 @@
   "name": "@miden-sdk/miden-wallet-adapter-react",
   "version": "0.14.3",
   "description": "Core react infrastructure for connecting Miden-compatible wallets to your dApp.",
+  "main": "dist/index.cjs",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./lazy": {
+      "types": "./dist/lazy.d.ts",
+      "import": "./dist/lazy.js",
+      "require": "./dist/lazy.cjs"
+    }
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/demox-labs/miden-wallet-adapter.git"
@@ -12,7 +25,7 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "build": "tsc",
+    "build": "tsup",
     "clean": "rimraf dist/ node_modules/",
     "doc": "typedoc --disableSources --plugin typedoc-plugin-markdown --entryPoints index.ts",
     "test": "vitest run"
@@ -28,6 +41,7 @@
     "jsdom": "^24.0.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
+    "tsup": "^8.0.0",
     "vitest": "^1.0.0"
   },
   "peerDependencies": {

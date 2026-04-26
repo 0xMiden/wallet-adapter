@@ -13,7 +13,7 @@ import {
   SignerContext,
   type SignerContextValue,
   type IngestStateCallback,
-} from '@miden-sdk/react';
+} from '@miden-sdk/react/lazy';
 import {
   type Adapter,
   AllowedPrivateData,
@@ -35,7 +35,7 @@ import {
   type InputNoteDetails,
   type TransactionOutput,
 } from '@miden-sdk/miden-wallet-adapter-base';
-import type { NoteFilterTypes, AccountComponent } from '@miden-sdk/miden-sdk';
+import type { NoteFilterTypes, AccountComponent } from '@miden-sdk/miden-sdk/lazy';
 import { MidenWalletAdapter } from '@miden-sdk/miden-wallet-adapter-miden';
 import { useLocalStorage } from './useLocalStorage';
 
@@ -665,7 +665,7 @@ export const MidenFiSignerProvider: FC<MidenFiSignerProviderProps> = ({
           // ~15s on auto-sync) doesn't repeatedly cross the dynamic-import
           // microtask boundary.
           const { AccountStorageMode, NoteFile, NoteFilter, NoteFilterTypes } =
-            await import('@miden-sdk/miden-sdk');
+            await import('@miden-sdk/miden-sdk/lazy');
 
           const signCb = async (_: Uint8Array, signingInputs: Uint8Array) => {
             const result = await signBytesRef.current!(signingInputs, 'signingInputs');
