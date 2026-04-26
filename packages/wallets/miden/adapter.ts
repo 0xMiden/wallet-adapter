@@ -285,13 +285,9 @@ export class MidenWalletAdapter extends BaseMessageSignerWalletAdapter {
     }
     try {
       const result = await wallet.requestPrivateNoteBytes(noteIds);
-      // Wallet returns base64-encoded NoteFile.serialize() bytes; decode.
-      return result.bytes.map((b64) => {
-        const binStr = atob(b64);
-        const bytes = new Uint8Array(binStr.length);
-        for (let i = 0; i < binStr.length; i++) bytes[i] = binStr.charCodeAt(i);
-        return bytes;
-      });
+      // Wallet returns base64-encoded NoteFile.serialize() bytes; decode via
+      // the shared helper (handles Node fallback when atob is unavailable).
+      return result.bytes.map(b64ToU8);
     } catch (error: any) {
       // Silent contract: caller (ingestState) treats failures as best-effort.
       // Still emit for diagnostics.

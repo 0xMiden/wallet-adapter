@@ -661,7 +661,11 @@ export const MidenFiSignerProvider: FC<MidenFiSignerProviderProps> = ({
 
       try {
         if (!cancelled) {
-          const { AccountStorageMode } = await import('@miden-sdk/miden-sdk');
+          // Hoist all SDK module imports here so ingestState (which fires every
+          // ~15s on auto-sync) doesn't repeatedly cross the dynamic-import
+          // microtask boundary.
+          const { AccountStorageMode, NoteFile, NoteFilter, NoteFilterTypes } =
+            await import('@miden-sdk/miden-sdk');
 
           const signCb = async (_: Uint8Array, signingInputs: Uint8Array) => {
             const result = await signBytesRef.current!(signingInputs, 'signingInputs');
@@ -705,10 +709,6 @@ export const MidenFiSignerProvider: FC<MidenFiSignerProviderProps> = ({
             }
             if (allBytes.length === 0) return;
 
-            const { NoteFile, NoteFilter, NoteFilterTypes } = await import(
-              '@miden-sdk/miden-sdk'
-            );
-
             // Snapshot local note IDs inside runExclusive for a coherent view.
             // NoteFilterTypes.All catches notes in every state so we don't
             // re-import a note already in flight.
@@ -719,20 +719,18 @@ export const MidenFiSignerProvider: FC<MidenFiSignerProviderProps> = ({
               return new Set(localNotes.map((n: any) => n.id().toString()));
             });
 
-            // Import each missing note in its own runExclusive call so other
-            // hooks can interleave between notes. Per-note try/catch so one
-            // malformed blob doesn't lose the rest.
+            // Per-note: deserialize, get the note ID via NoteFile.noteId()
+            // (which IS exposed on the WASM type), skip if already in store,
+            // import otherwise. Each import in its own runExclusive so other
+            // hooks (account fetch, sync, send) can interleave between notes.
+            // Per-note try/catch so one malformed blob doesn't lose the rest.
             for (const bytes of allBytes) {
               try {
                 const noteFile = NoteFile.deserialize(bytes);
-                // NoteFile doesn't expose a direct id() — defer dedup to
-                // importNoteFile (which throws/no-ops on duplicate). We
-                // already filtered the candidate set via the snapshot above
-                // best-effort; treat duplicate-import errors as benign.
-                const noteId = await runExclusive(() =>
-                  client.importNoteFile(noteFile)
-                );
-                if (localIds.has(noteId.toString())) continue;
+                const noteId = noteFile.noteId().toString();
+                if (localIds.has(noteId)) continue;
+                await runExclusive(() => client.importNoteFile(noteFile));
+                localIds.add(noteId);
               } catch (err) {
                 console.warn(
                   '[MidenFiSigner] failed to import private note:',
