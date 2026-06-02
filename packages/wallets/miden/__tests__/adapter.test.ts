@@ -195,9 +195,59 @@ describe('MidenWalletAdapter', () => {
       expect(result).toBe('tx-consume-1');
     });
 
-    it('requestTransaction delegates to wallet and returns transactionId', async () => {
+    it('requestTransaction routes a Consume transaction to wallet.requestConsume (issue #88)', async () => {
       const { adapter, mockWallet } = await createConnectedAdapter();
-      const tx = { type: 'send' as any, payload: {} as any };
+      const payload = {
+        faucetId: 'f',
+        noteId: 'n',
+        noteType: 'public' as const,
+        amount: 50,
+      };
+      const result = await adapter.requestTransaction({
+        type: 'consume' as any,
+        payload,
+      });
+      expect(mockWallet.requestConsume).toHaveBeenCalledWith(payload);
+      expect(mockWallet.requestTransaction).not.toHaveBeenCalled();
+      expect(result).toBe('tx-consume-1');
+    });
+
+    it('requestTransaction routes a Send transaction to wallet.requestSend', async () => {
+      const { adapter, mockWallet } = await createConnectedAdapter();
+      const payload = {
+        senderAddress: 's',
+        recipientAddress: 'r',
+        faucetId: 'f',
+        noteType: 'public' as const,
+        amount: 100,
+      };
+      const result = await adapter.requestTransaction({
+        type: 'send' as any,
+        payload,
+      });
+      expect(mockWallet.requestSend).toHaveBeenCalledWith(payload);
+      expect(mockWallet.requestTransaction).not.toHaveBeenCalled();
+      expect(result).toBe('tx-send-1');
+    });
+
+    it('requestTransaction forwards a Custom transaction to wallet.requestTransaction', async () => {
+      const { adapter, mockWallet } = await createConnectedAdapter();
+      const tx = {
+        type: 'custom' as any,
+        payload: {
+          address: 'addr',
+          recipientAddress: 'r',
+          transactionRequest: 'base64-request',
+        } as any,
+      };
+      const result = await adapter.requestTransaction(tx);
+      expect(mockWallet.requestTransaction).toHaveBeenCalledWith(tx);
+      expect(result).toBe('tx-custom-1');
+    });
+
+    it('requestTransaction forwards a bare (typeless) payload to wallet.requestTransaction', async () => {
+      const { adapter, mockWallet } = await createConnectedAdapter();
+      const tx = { address: 'addr', transactionRequest: 'base64-request' } as any;
       const result = await adapter.requestTransaction(tx);
       expect(mockWallet.requestTransaction).toHaveBeenCalledWith(tx);
       expect(result).toBe('tx-custom-1');

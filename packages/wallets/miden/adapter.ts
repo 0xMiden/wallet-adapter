@@ -16,6 +16,7 @@ import {
   MidenSendTransaction,
   MidenTransaction,
   MidenConsumeTransaction,
+  TransactionType,
   WalletTransactionError,
   Asset,
   CreateAccountParams,
@@ -180,7 +181,30 @@ export class MidenWalletAdapter extends BaseMessageSignerWalletAdapter {
       const wallet = this._wallet;
       if (!wallet || !this.address) throw new WalletNotConnectedError();
       try {
-        const result = await wallet.requestTransaction(transaction);
+        // The wallet's generalized `requestTransaction` endpoint only accepts
+        // a custom-transaction payload, so a `send`/`consume` transaction must
+        // be routed to its dedicated endpoint — otherwise the wallet rejects
+        // it with "Invalid CustomTransaction payload". Dispatching by `type`
+        // here is what lets the typed `Transaction` / `TransactionType` API
+        // (incl. `Transaction.createConsumeTransaction`) work for every type.
+        let result: { transactionId?: string };
+        switch (transaction.type) {
+          case TransactionType.Send:
+            result = await wallet.requestSend(
+              transaction.payload as MidenSendTransaction
+            );
+            break;
+          case TransactionType.Consume:
+            result = await wallet.requestConsume(
+              transaction.payload as MidenConsumeTransaction
+            );
+            break;
+          default:
+            // Custom transactions — and legacy callers that pass a bare
+            // `CustomTransaction` payload — go through the generalized endpoint.
+            result = await wallet.requestTransaction(transaction);
+            break;
+        }
         return result.transactionId!;
       } catch (error: any) {
         throw new WalletTransactionError(error?.message, error);

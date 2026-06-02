@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Fixes
+
+* `MidenWalletAdapter.requestTransaction` now dispatches by `transaction.type`: `Send` transactions go to the wallet's `requestSend` endpoint and `Consume` transactions to `requestConsume`, while `Custom` (and bare/legacy payloads) continue through the generalized `requestTransaction` endpoint. The wallet's generalized endpoint only accepts a custom-transaction payload, so consuming a note via the typed `Transaction(TransactionType.Consume, new ConsumeTransaction(...))` API previously failed with `WalletTransactionError: INVALID_PARAMS: Invalid CustomTransaction payload`. Fixes [#88](https://github.com/0xMiden/wallet-adapter/issues/88).
+
 ## 2026-04-21
 
 ### Fixes
