@@ -732,14 +732,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@miden-sdk/miden-sdk@npm:0.14.4, @miden-sdk/miden-sdk@npm:^0.14.4":
-  version: 0.14.4
-  resolution: "@miden-sdk/miden-sdk@npm:0.14.4"
+"@miden-sdk/miden-sdk@npm:0.15.0, @miden-sdk/miden-sdk@npm:^0.15.0":
+  version: 0.15.0
+  resolution: "@miden-sdk/miden-sdk@npm:0.15.0"
   dependencies:
-    "@rollup/plugin-typescript": "npm:^12.3.0"
+    "@miden-sdk/node-darwin-arm64": "npm:0.15.0"
+    "@miden-sdk/node-darwin-x64": "npm:0.15.0"
+    "@miden-sdk/node-linux-x64-gnu": "npm:0.15.0"
     dexie: "npm:^4.0.1"
     glob: "npm:^11.0.0"
-  checksum: 10c0/0eb292b680665a1019cec8531518a96c9e5389acd6b99a18487e2a8167374ca9c858da36bf49d9222e6bfa0b6c35dc38414daa9ddb7ee59e1b27f3abd762ce22
+  dependenciesMeta:
+    "@miden-sdk/node-darwin-arm64":
+      optional: true
+    "@miden-sdk/node-darwin-x64":
+      optional: true
+    "@miden-sdk/node-linux-x64-gnu":
+      optional: true
+  checksum: 10c0/94b1849c584c5480893ab368dc491e1b73487c89551324fc57fd0eba15287802a8581e3ebaf1ebd8ea66ffc3387ba88703ddb3a8621d1de3bbf4df1d9b5a108e
   languageName: node
   linkType: hard
 
@@ -770,17 +779,17 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@miden-sdk/miden-wallet-adapter-react@workspace:packages/core/react"
   dependencies:
-    "@miden-sdk/miden-sdk": "npm:^0.14.4"
+    "@miden-sdk/miden-sdk": "npm:^0.15.0"
     "@miden-sdk/miden-wallet-adapter-base": "workspace:^"
     "@miden-sdk/miden-wallet-adapter-miden": "workspace:^"
-    "@miden-sdk/react": "npm:^0.14.4"
+    "@miden-sdk/react": "npm:^0.15.0"
     "@testing-library/react": "npm:^14.0.0"
     jsdom: "npm:^24.0.0"
     react: "npm:^19.1.1"
     react-dom: "npm:^19.1.1"
     vitest: "npm:^1.0.0"
   peerDependencies:
-    "@miden-sdk/react": ^0.14.4
+    "@miden-sdk/react": ^0.15.0
     react: ^18.0.0 || ^19.0.0
   peerDependenciesMeta:
     "@miden-sdk/react":
@@ -826,15 +835,36 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@miden-sdk/react@npm:^0.14.4":
-  version: 0.14.4
-  resolution: "@miden-sdk/react@npm:0.14.4"
+"@miden-sdk/node-darwin-arm64@npm:0.15.0":
+  version: 0.15.0
+  resolution: "@miden-sdk/node-darwin-arm64@npm:0.15.0"
+  conditions: os=darwin & cpu=arm64
+  languageName: node
+  linkType: hard
+
+"@miden-sdk/node-darwin-x64@npm:0.15.0":
+  version: 0.15.0
+  resolution: "@miden-sdk/node-darwin-x64@npm:0.15.0"
+  conditions: os=darwin & cpu=x64
+  languageName: node
+  linkType: hard
+
+"@miden-sdk/node-linux-x64-gnu@npm:0.15.0":
+  version: 0.15.0
+  resolution: "@miden-sdk/node-linux-x64-gnu@npm:0.15.0"
+  conditions: os=linux & cpu=x64
+  languageName: node
+  linkType: hard
+
+"@miden-sdk/react@npm:^0.15.0":
+  version: 0.15.0
+  resolution: "@miden-sdk/react@npm:0.15.0"
   dependencies:
     zustand: "npm:^5.0.0"
   peerDependencies:
-    "@miden-sdk/miden-sdk": ^0.14.4
+    "@miden-sdk/miden-sdk": ^0.15.0
     react: ">=18.0.0"
-  checksum: 10c0/503a4631361e0b8d1737665373b988fabb7eec77957673cc739fd20d5b58e89815fb1445c248a22237352da9f15d9393fd14448c5289199746420a8c8be00325
+  checksum: 10c0/1e9673785547b06d9a68de7fa72cf11bfd05045d19eae90df4cf9350ef38e29795478883bd9aaef78a0866e87682d1e5b48cff15c1537550d398b6d25e3a585f
   languageName: node
   linkType: hard
 
@@ -883,25 +913,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rollup/plugin-typescript@npm:^12.3.0":
-  version: 12.3.0
-  resolution: "@rollup/plugin-typescript@npm:12.3.0"
-  dependencies:
-    "@rollup/pluginutils": "npm:^5.1.0"
-    resolve: "npm:^1.22.1"
-  peerDependencies:
-    rollup: ^2.14.0||^3.0.0||^4.0.0
-    tslib: "*"
-    typescript: ">=3.7.0"
-  peerDependenciesMeta:
-    rollup:
-      optional: true
-    tslib:
-      optional: true
-  checksum: 10c0/41d14e9a9792d8d9751c275cf87c2de796ddd1a64c96fedc622baad8cfbb1247537e37ae428e59e1850de7d7165941ee1a4030dbe9bebd5fbb38c5e4f751d8b5
-  languageName: node
-  linkType: hard
-
 "@rollup/plugin-virtual@npm:^3.0.2":
   version: 3.0.2
   resolution: "@rollup/plugin-virtual@npm:3.0.2"
@@ -914,7 +925,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rollup/pluginutils@npm:^5.0.1, @rollup/pluginutils@npm:^5.1.0":
+"@rollup/pluginutils@npm:^5.0.1":
   version: 5.3.0
   resolution: "@rollup/pluginutils@npm:5.3.0"
   dependencies:
@@ -2306,7 +2317,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "discover-miden-example@workspace:examples/discover-miden"
   dependencies:
-    "@miden-sdk/miden-sdk": "npm:^0.14.4"
+    "@miden-sdk/miden-sdk": "npm:^0.15.0"
     "@miden-sdk/miden-wallet-adapter-base": "workspace:^"
     "@miden-sdk/miden-wallet-adapter-miden": "workspace:^"
     "@miden-sdk/miden-wallet-adapter-react": "workspace:^"
@@ -3627,7 +3638,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "miden-wallet-adapter@workspace:."
   dependencies:
-    "@miden-sdk/miden-sdk": "npm:0.14.4"
+    "@miden-sdk/miden-sdk": "npm:0.15.0"
     "@types/node": "npm:^22.13.5"
     "@types/react": "npm:^19.0.10"
     "@types/react-dom": "npm:^19.0.4"
@@ -3636,7 +3647,7 @@ __metadata:
     typedoc-plugin-markdown: "npm:^4.4.1"
     typescript: "npm:^5.7.2"
   peerDependencies:
-    "@miden-sdk/miden-sdk": 0.14.4
+    "@miden-sdk/miden-sdk": 0.15.0
   languageName: unknown
   linkType: soft
 
@@ -4411,11 +4422,11 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "react-signer-example@workspace:examples/react-signer"
   dependencies:
-    "@miden-sdk/miden-sdk": "npm:^0.14.4"
+    "@miden-sdk/miden-sdk": "npm:^0.15.0"
     "@miden-sdk/miden-wallet-adapter-base": "workspace:^"
     "@miden-sdk/miden-wallet-adapter-miden": "workspace:^"
     "@miden-sdk/miden-wallet-adapter-react": "workspace:^"
-    "@miden-sdk/react": "npm:^0.14.4"
+    "@miden-sdk/react": "npm:^0.15.0"
     "@types/react": "npm:^19.2.0"
     "@types/react-dom": "npm:^19.2.0"
     "@vitejs/plugin-react": "npm:^5.1.1"
@@ -4509,7 +4520,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"resolve@npm:^1.17.0, resolve@npm:^1.22.1":
+"resolve@npm:^1.17.0":
   version: 1.22.11
   resolution: "resolve@npm:1.22.11"
   dependencies:
@@ -4522,7 +4533,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"resolve@patch:resolve@npm%3A^1.17.0#optional!builtin<compat/resolve>, resolve@patch:resolve@npm%3A^1.22.1#optional!builtin<compat/resolve>":
+"resolve@patch:resolve@npm%3A^1.17.0#optional!builtin<compat/resolve>":
   version: 1.22.11
   resolution: "resolve@patch:resolve@npm%3A1.22.11#optional!builtin<compat/resolve>::version=1.22.11&hash=c3c19d"
   dependencies:

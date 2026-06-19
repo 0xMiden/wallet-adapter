@@ -72,7 +72,7 @@ export type CreateAccountType =
   | 'RegularAccountImmutableCode'
   | 'RegularAccountUpdatableCode';
 
-export type CreateAccountStorageMode = 'private' | 'public' | 'network';
+export type CreateAccountStorageMode = 'private' | 'public';
 
 export interface CreateAccountParams {
   accountType?: CreateAccountType;
