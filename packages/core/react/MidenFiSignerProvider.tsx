@@ -100,8 +100,8 @@ export interface MidenFiSignerProviderProps {
   localStorageKey?: string;
   /** Account type for the signer account. Defaults to 'RegularAccountImmutableCode' */
   accountType?: SignerAccountType;
-  /** Storage mode for the signer account ('private' | 'public' | 'network'). Defaults to 'public' */
-  storageMode?: 'private' | 'public' | 'network';
+  /** Storage mode for the signer account ('private' | 'public'). Defaults to 'public' */
+  storageMode?: 'private' | 'public';
   /** Custom account components to include in the account (e.g. from a compiled .masp package) */
   customComponents?: AccountComponent[];
   /** Existing account ID to import instead of creating a new account */
