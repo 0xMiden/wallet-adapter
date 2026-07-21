@@ -6,8 +6,8 @@ import React from 'react';
 const createMockAdapter = (overrides = {}) => {
   const listeners: Record<string, Function[]> = {};
   return {
-    name: 'Miden Wallet',
-    url: 'https://chromewebstore.google.com/detail/miden-wallet/ablmompanofnodfdkgchkpmphailefpb',
+    name: 'Bread Wallet',
+    url: 'https://chromewebstore.google.com/detail/Bread/coajhopfooegmaifelglfboehacldcbo',
     icon: 'icon-data',
     readyState: 'Unsupported',
     connected: false,
@@ -272,7 +272,7 @@ describe('MidenFiSignerProvider', () => {
       });
 
       expect(result.current.wallets).toHaveLength(1);
-      expect(result.current.wallets[0].adapter.name).toBe('Miden Wallet');
+      expect(result.current.wallets[0].adapter.name).toBe('Bread Wallet');
     });
 
     it('connected is false initially', () => {

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.15.3 (2026-07-21)
+
+### Changes
+
+* Rebranded the wallet adapter from **Miden Wallet** to **Bread Wallet**. `MidenWalletName` now resolves to `'Bread Wallet'`, the download link points to the new Chrome Web Store listing (`chromewebstore.google.com/detail/Bread/coajhopfooegmaifelglfboehacldcbo`), and the wallet icon is the Bread brand mark. `WalletModal` derives its recommended wallet from the exported `MidenWalletName` constant instead of a hardcoded string, so the two can no longer drift.
+
 ## 0.15.2 (2026-07-21)
 
 ### Features
