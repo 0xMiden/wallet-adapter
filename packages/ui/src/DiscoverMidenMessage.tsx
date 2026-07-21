@@ -9,7 +9,7 @@ export const DiscoverMidenMessage = () => {
       </h1>
       <p>
         Experience the next evolution of blockchain technology with
-        Miden. Install the Miden Wallet and access a seamless, decentralized
+        Miden. Install the Bread Wallet and access a seamless, decentralized
         ecosystem today.
       </p>
     </div>

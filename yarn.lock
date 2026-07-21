@@ -802,6 +802,7 @@ __metadata:
   resolution: "@miden-sdk/miden-wallet-adapter-reactui@workspace:packages/ui"
   dependencies:
     "@miden-sdk/miden-wallet-adapter-base": "workspace:^"
+    "@miden-sdk/miden-wallet-adapter-miden": "workspace:^"
     "@miden-sdk/miden-wallet-adapter-react": "workspace:^"
     "@types/react-dom": "npm:^19.0.4"
     copyfiles: "npm:^2.4.1"

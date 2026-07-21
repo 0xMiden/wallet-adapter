@@ -15,6 +15,7 @@ import {
   WalletReadyState,
 } from '@miden-sdk/miden-wallet-adapter-base';
 import { useWallet, Wallet } from '@miden-sdk/miden-wallet-adapter-react';
+import { MidenWalletName } from '@miden-sdk/miden-wallet-adapter-miden';
 import { useWalletModal } from './useWalletModal';
 import { WalletListItem } from './WalletListItem';
 import { DiscoverMidenMessage } from './DiscoverMidenMessage';
@@ -64,7 +65,7 @@ export const WalletModal: FC<WalletModalProps> = ({
         installedWallets[0]!
       : wallets.find(
           (wallet: { adapter: { name: WalletName } }) =>
-            wallet.adapter.name === 'Miden Wallet'
+            wallet.adapter.name === MidenWalletName
         ) ||
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           otherWallets[0]!;
@@ -196,7 +197,7 @@ export const WalletModal: FC<WalletModalProps> = ({
             {installedWallets.length ? (
               <>
                 <div className="wallet-adapter-modal-content">
-                  Connect your Miden Wallet and start exploring its powerful
+                  Connect your Bread Wallet and start exploring its powerful
                   features now!
                   <hr />
                 </div>
