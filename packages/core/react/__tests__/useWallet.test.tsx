@@ -74,7 +74,7 @@ describe('requestGuardianInfo wiring (useWallet)', () => {
     expect(typeof result.current.requestGuardianInfo).toBe('function');
   });
 
-  it('calls through to the adapter and rejects when not connected', async () => {
+  it('rejects and does not reach the adapter when not connected', async () => {
     const stubAdapter = new StubAdapter();
     const { result } = renderHook(() => useWallet(), {
       wrapper: withWalletProvider(stubAdapter),
