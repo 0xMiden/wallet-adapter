@@ -32,6 +32,18 @@ export interface Asset {
   amount: string;
 }
 
+export interface GuardianInfo {
+  isGuardianAccount: boolean;
+  guardianEndpoint: string | null;
+  guardianProvider:
+    | 'open-zeppelin'
+    | 'gateway'
+    | 'lambda-class'
+    | 'custom'
+    | null;
+  guardianSyncStatus: 'in-sync' | 'out-of-sync' | null;
+}
+
 export type InputNoteDetails = {
   noteId: string;
   senderAccountId: string | undefined;

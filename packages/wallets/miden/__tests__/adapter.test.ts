@@ -35,6 +35,14 @@ function createMockWallet(overrides: Record<string, any> = {}) {
     requestAssets: vi
       .fn()
       .mockResolvedValue({ assets: [{ faucetId: 'f1', amount: '100' }] }),
+    requestGuardianInfo: vi.fn().mockResolvedValue({
+      guardianInfo: {
+        isGuardianAccount: false,
+        guardianEndpoint: null,
+        guardianProvider: null,
+        guardianSyncStatus: null,
+      },
+    }),
     requestPrivateNotes: vi
       .fn()
       .mockResolvedValue({ privateNotes: [{ noteId: 'n1' }] }),
@@ -126,6 +134,10 @@ describe('MidenWalletAdapter', () => {
       {
         name: 'requestAssets',
         call: (a) => a.requestAssets(),
+      },
+      {
+        name: 'requestGuardianInfo',
+        call: (a) => a.requestGuardianInfo(),
       },
       {
         name: 'requestPrivateNotes',
@@ -257,6 +269,43 @@ describe('MidenWalletAdapter', () => {
       const { adapter } = await createConnectedAdapter();
       const assets = await adapter.requestAssets();
       expect(assets).toEqual([{ faucetId: 'f1', amount: '100' }]);
+    });
+
+    it('requestGuardianInfo unwraps the provider result', async () => {
+      const { adapter, mockWallet } = await createConnectedAdapter();
+      mockWallet.requestGuardianInfo.mockResolvedValue({
+        guardianInfo: {
+          isGuardianAccount: true,
+          guardianEndpoint: 'https://g',
+          guardianProvider: 'gateway',
+          guardianSyncStatus: 'in-sync',
+        },
+      });
+
+      const guardianInfo = await adapter.requestGuardianInfo();
+      expect(guardianInfo).toEqual({
+        isGuardianAccount: true,
+        guardianEndpoint: 'https://g',
+        guardianProvider: 'gateway',
+        guardianSyncStatus: 'in-sync',
+      });
+    });
+
+    it('requestGuardianInfo emits error and wraps failure', async () => {
+      const { adapter, mockWallet } = await createConnectedAdapter();
+      mockWallet.requestGuardianInfo.mockRejectedValue(
+        new Error('network error')
+      );
+
+      const errorHandler = vi.fn();
+      adapter.on('error', errorHandler);
+
+      await expect(adapter.requestGuardianInfo()).rejects.toThrow(
+        WalletTransactionError
+      );
+      expect(errorHandler).toHaveBeenCalledWith(
+        expect.any(WalletTransactionError)
+      );
     });
 
     it('requestPrivateNotes returns notes array', async () => {

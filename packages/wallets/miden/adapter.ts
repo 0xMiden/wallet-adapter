@@ -19,6 +19,7 @@ import {
   TransactionType,
   WalletTransactionError,
   Asset,
+  GuardianInfo,
   CreateAccountParams,
   InputNoteDetails,
   TransactionOutput,
@@ -45,6 +46,7 @@ export interface MidenWallet extends EventEmitter<MidenWalletEvents> {
     transaction: MidenTransaction
   ): Promise<{ transactionId?: string }>;
   requestAssets(): Promise<{ assets: Asset[] }>;
+  requestGuardianInfo(): Promise<{ guardianInfo: GuardianInfo }>;
   requestPrivateNotes(
     noteFilterType: NoteFilterTypes,
     noteIds?: string[]
@@ -222,6 +224,22 @@ export class MidenWalletAdapter extends BaseMessageSignerWalletAdapter {
       try {
         const result = await wallet.requestAssets();
         return result.assets;
+      } catch (error: any) {
+        throw new WalletTransactionError(error?.message, error);
+      }
+    } catch (error: any) {
+      this.emit('error', error);
+      throw error;
+    }
+  }
+
+  async requestGuardianInfo(): Promise<GuardianInfo> {
+    try {
+      const wallet = this._wallet;
+      if (!wallet || !this.address) throw new WalletNotConnectedError();
+      try {
+        const result = await wallet.requestGuardianInfo();
+        return result.guardianInfo;
       } catch (error: any) {
         throw new WalletTransactionError(error?.message, error);
       }
