@@ -321,6 +321,20 @@ export const WalletProvider: FC<WalletProviderProps> = ({
     [adapter, handleError, connected]
   );
 
+  // Request guardian info
+  const requestGuardianInfo:
+    | MessageSignerWalletAdapterProps['requestGuardianInfo']
+    | undefined = useMemo(
+    () =>
+      adapter && 'requestGuardianInfo' in adapter
+        ? async () => {
+            if (!connected) throw handleError(new WalletNotConnectedError());
+            return await adapter.requestGuardianInfo();
+          }
+        : undefined,
+    [adapter, handleError, connected]
+  );
+
   // Request private notes
   const requestPrivateNotes:
     | MessageSignerWalletAdapterProps['requestPrivateNotes']
@@ -428,6 +442,7 @@ export const WalletProvider: FC<WalletProviderProps> = ({
         disconnect,
         requestTransaction,
         requestAssets,
+        requestGuardianInfo,
         requestPrivateNotes,
         signBytes,
         importPrivateNote,

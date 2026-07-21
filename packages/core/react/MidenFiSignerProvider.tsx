@@ -59,6 +59,7 @@ export interface WalletContextState {
 
   requestTransaction?: MessageSignerWalletAdapterProps['requestTransaction'];
   requestAssets?: MessageSignerWalletAdapterProps['requestAssets'];
+  requestGuardianInfo?: MessageSignerWalletAdapterProps['requestGuardianInfo'];
   requestPrivateNotes?: MessageSignerWalletAdapterProps['requestPrivateNotes'];
   signBytes?: MessageSignerWalletAdapterProps['signBytes'];
   importPrivateNote?: MessageSignerWalletAdapterProps['importPrivateNote'];
@@ -474,6 +475,20 @@ export const MidenFiSignerProvider: FC<MidenFiSignerProviderProps> = ({
     [adapter, handleError, connected]
   );
 
+  // Request guardian info
+  const requestGuardianInfo:
+    | MessageSignerWalletAdapterProps['requestGuardianInfo']
+    | undefined = useMemo(
+    () =>
+      adapter && 'requestGuardianInfo' in adapter
+        ? async () => {
+            if (!connected) throw handleError(new WalletNotConnectedError());
+            return await adapter.requestGuardianInfo();
+          }
+        : undefined,
+    [adapter, handleError, connected]
+  );
+
   // Request private notes
   const requestPrivateNotes:
     | MessageSignerWalletAdapterProps['requestPrivateNotes']
@@ -698,6 +713,7 @@ export const MidenFiSignerProvider: FC<MidenFiSignerProviderProps> = ({
       disconnect,
       requestTransaction,
       requestAssets,
+      requestGuardianInfo,
       requestPrivateNotes,
       signBytes,
       importPrivateNote,
@@ -721,6 +737,7 @@ export const MidenFiSignerProvider: FC<MidenFiSignerProviderProps> = ({
       disconnect,
       requestTransaction,
       requestAssets,
+      requestGuardianInfo,
       requestPrivateNotes,
       signBytes,
       importPrivateNote,

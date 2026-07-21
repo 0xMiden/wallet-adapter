@@ -17,6 +17,12 @@ const createMockAdapter = (overrides = {}) => {
     disconnect: vi.fn().mockResolvedValue(undefined),
     signBytes: vi.fn().mockResolvedValue(new Uint8Array(67)),
     createAccount: vi.fn().mockResolvedValue('account-123'),
+    requestGuardianInfo: vi.fn().mockResolvedValue({
+      isGuardianAccount: false,
+      guardianEndpoint: null,
+      guardianProvider: null,
+      guardianSyncStatus: null,
+    }),
     on: vi.fn((event: string, handler: Function) => {
       if (!listeners[event]) listeners[event] = [];
       listeners[event].push(handler);
@@ -317,6 +323,16 @@ describe('MidenFiSignerProvider', () => {
       });
 
       expect(result.current.createAccount).toBeDefined();
+    });
+
+    it('exposes requestGuardianInfo from adapter', () => {
+      const { result } = renderHook(() => useMidenFiWallet(), {
+        wrapper: ({ children }) => (
+          <MidenFiSignerProvider>{children}</MidenFiSignerProvider>
+        ),
+      });
+
+      expect(typeof result.current.requestGuardianInfo).toBe('function');
     });
   });
 
