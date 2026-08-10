@@ -63,10 +63,10 @@ Access wallet state and functionality with the `useWallet` hook:
 import { useWallet, SendTransaction } from '@miden-sdk/miden-wallet-adapter';
 
 function SendComponent() {
-  const { wallet, address, connected } = useWallet();
+  const { wallet, address, connected, requestSend } = useWallet();
 
   const handleSend = async () => {
-    if (!wallet || !address) return;
+    if (!wallet || !address || !requestSend) return;
 
     const transaction = new SendTransaction(
       address,
@@ -77,7 +77,7 @@ function SendComponent() {
     );
 
     try {
-      await wallet.adapter.requestSend(transaction);
+      await requestSend(transaction);
       console.log('Transaction sent successfully!');
     } catch (error) {
       console.error('Transaction failed:', error);
