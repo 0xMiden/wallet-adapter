@@ -146,16 +146,34 @@ export class MidenWalletAdapter extends BaseMessageSignerWalletAdapter {
     this._readyState = readyState;
   }
 
+  /**
+   * The wallet reports "success" as soon as a transaction is ACCEPTED into its
+   * queue, not when it lands on chain — so a resolved call with no `transactionId`
+   * means the transaction was never submitted. Returning that as `undefined`
+   * (the old `result.transactionId!` non-null assertion) made the dApp treat a
+   * silent drop as success. Reject instead, so the dApp can surface it and
+   * poll `waitForTransaction(txId)` for on-chain confirmation (0xMiden/wallet#314).
+   */
+  private requireTransactionId(result: { transactionId?: string }): string {
+    if (!result?.transactionId) {
+      throw new WalletTransactionError(
+        'The wallet returned no transaction id — the transaction was not submitted'
+      );
+    }
+    return result.transactionId;
+  }
+
   async requestSend(transaction: MidenSendTransaction): Promise<string> {
     try {
       const wallet = this._wallet;
       if (!wallet || !this.address) throw new WalletNotConnectedError();
+      let result: { transactionId?: string };
       try {
-        const result = await wallet.requestSend(transaction);
-        return result.transactionId!;
+        result = await wallet.requestSend(transaction);
       } catch (error: any) {
         throw new WalletTransactionError(error?.message, error);
       }
+      return this.requireTransactionId(result);
     } catch (error: any) {
       this.emit('error', error);
       throw error;
@@ -166,12 +184,13 @@ export class MidenWalletAdapter extends BaseMessageSignerWalletAdapter {
     try {
       const wallet = this._wallet;
       if (!wallet || !this.address) throw new WalletNotConnectedError();
+      let result: { transactionId?: string };
       try {
-        const result = await wallet.requestConsume(transaction);
-        return result.transactionId!;
+        result = await wallet.requestConsume(transaction);
       } catch (error: any) {
         throw new WalletTransactionError(error?.message, error);
       }
+      return this.requireTransactionId(result);
     } catch (error: any) {
       this.emit('error', error);
       throw error;
@@ -182,6 +201,7 @@ export class MidenWalletAdapter extends BaseMessageSignerWalletAdapter {
     try {
       const wallet = this._wallet;
       if (!wallet || !this.address) throw new WalletNotConnectedError();
+      let result: { transactionId?: string };
       try {
         // The wallet's generalized `requestTransaction` endpoint only accepts
         // a custom-transaction payload, so a `send`/`consume` transaction must
@@ -189,7 +209,6 @@ export class MidenWalletAdapter extends BaseMessageSignerWalletAdapter {
         // it with "Invalid CustomTransaction payload". Dispatching by `type`
         // here is what lets the typed `Transaction` / `TransactionType` API
         // (incl. `Transaction.createConsumeTransaction`) work for every type.
-        let result: { transactionId?: string };
         switch (transaction.type) {
           case TransactionType.Send:
             result = await wallet.requestSend(
@@ -207,10 +226,10 @@ export class MidenWalletAdapter extends BaseMessageSignerWalletAdapter {
             result = await wallet.requestTransaction(transaction);
             break;
         }
-        return result.transactionId!;
       } catch (error: any) {
         throw new WalletTransactionError(error?.message, error);
       }
+      return this.requireTransactionId(result);
     } catch (error: any) {
       this.emit('error', error);
       throw error;
