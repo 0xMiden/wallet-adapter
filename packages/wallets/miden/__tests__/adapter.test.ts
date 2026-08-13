@@ -443,15 +443,60 @@ describe('MidenWalletAdapter', () => {
       ).rejects.toThrow(WalletConnectionError);
     });
 
-    it('does nothing if already connected', async () => {
+    it('re-drives the handshake and re-emits `connect` when called while already connected, repopulating the current account (0xMiden/wallet#470)', async () => {
       const { adapter, mockWallet } = await createConnectedAdapter();
-      // Call connect again
+
+      const connectHandler = vi.fn();
+      adapter.on('connect', connectHandler);
+
+      // The in-app browser preserves this adapter's JS context across a
+      // park/restore, so a re-opened dApp finds `connected === true`. The
+      // old early-return made a second connect() a silent no-op, so a
+      // re-mounted consumer that re-subscribed to events never got its
+      // account back ("Connect Wallet works only once"). A repeat connect()
+      // must re-drive the wallet handshake — which returns the current
+      // account — and re-emit `connect` so the consumer repopulates.
       await adapter.connect(
         PrivateDataPermission.UponRequest,
         WalletAdapterNetwork.Testnet
       );
-      // wallet.connect should have been called only once (during initial connect)
+
+      expect(mockWallet.connect).toHaveBeenCalledTimes(2);
+      expect(connectHandler).toHaveBeenCalledWith('0xmockaddress');
+      expect(adapter.connected).toBe(true);
+      expect(adapter.address).toBe('0xmockaddress');
+    });
+
+    it('ignores a concurrent connect() while one is still in flight', async () => {
+      let releaseFirstConnect: () => void = () => {};
+      const mockWallet = createMockWallet({
+        connect: vi.fn(
+          () =>
+            new Promise<void>(resolve => {
+              releaseFirstConnect = resolve;
+            })
+        ),
+      });
+      (window as any).midenWallet = mockWallet;
+
+      const adapter = new MidenWalletAdapter();
+      adapter.readyState = WalletReadyState.Installed;
+
+      // First connect stays in flight (its wallet.connect() promise is pending).
+      const first = adapter.connect(
+        PrivateDataPermission.UponRequest,
+        WalletAdapterNetwork.Testnet
+      );
+      // A second call while `connecting` is true must be a guarded no-op.
+      await adapter.connect(
+        PrivateDataPermission.UponRequest,
+        WalletAdapterNetwork.Testnet
+      );
       expect(mockWallet.connect).toHaveBeenCalledTimes(1);
+
+      releaseFirstConnect();
+      await first;
+      expect(adapter.connected).toBe(true);
     });
   });
 

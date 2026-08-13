@@ -86,3 +86,42 @@ describe('requestGuardianInfo wiring (useWallet)', () => {
     expect(stubAdapter.requestGuardianInfo).not.toHaveBeenCalled();
   });
 });
+
+describe('connect re-drive when already connected (useWallet, 0xMiden/wallet#470)', () => {
+  afterEach(() => {
+    cleanup();
+    localStorage.clear();
+  });
+
+  it('re-drives adapter.connect() when connect() is called again while already connected', async () => {
+    const stubAdapter = new StubAdapter();
+    // A successful connect flips the adapter to connected and emits `connect`,
+    // so the provider transitions to connected (mirrors a real handshake).
+    stubAdapter.connect = vi.fn().mockImplementation(async () => {
+      stubAdapter.connected = true;
+      stubAdapter.address = '0xabc';
+      stubAdapter.publicKey = new Uint8Array([1, 2, 3]);
+      stubAdapter.emit('connect', '0xabc');
+    });
+
+    const { result } = renderHook(() => useWallet(), {
+      wrapper: withWalletProvider(stubAdapter),
+    });
+
+    await act(() => result.current.select(stubAdapter.name));
+
+    await act(async () => {
+      await result.current.connect();
+    });
+    expect(stubAdapter.connect).toHaveBeenCalledTimes(1);
+    expect(result.current.connected).toBe(true);
+
+    // The in-app browser preserves the dApp's JS context across a
+    // park/restore, so a re-opened dApp is still connected. A second
+    // connect() must re-drive instead of silently no-opping (#470).
+    await act(async () => {
+      await result.current.connect();
+    });
+    expect(stubAdapter.connect).toHaveBeenCalledTimes(2);
+  });
+});

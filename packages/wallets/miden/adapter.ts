@@ -358,7 +358,23 @@ export class MidenWalletAdapter extends BaseMessageSignerWalletAdapter {
     allowedPrivateData?: AllowedPrivateData
   ): Promise<void> {
     try {
-      if (this.connected || this.connecting) return;
+      // Guard only against a *concurrent* connect — NOT against being
+      // already connected. The in-app wallet browser preserves this
+      // adapter's JS context across a park/restore (a dApp is minimized and
+      // reopened without a page reload), so a re-opened dApp finds this
+      // instance with `connected === true`. An early-return-when-connected
+      // made a second connect() a silent no-op, so a re-mounted consumer
+      // that re-subscribed to events never received its account back —
+      // "Connect Wallet works only once" (0xMiden/wallet#470). Re-driving
+      // the handshake below is cheap for the common case — the wallet
+      // returns the current account for an existing permission without
+      // re-prompting — and re-emits `connect`, so repeated connect() calls
+      // repopulate the account instead of being suppressed by stale session
+      // state. (If the wallet has since locked, the re-drive can surface an
+      // unlock prompt where the old code was a silent no-op; that's the
+      // intended trade-off — a locked wallet genuinely needs to be unlocked
+      // to hand back the account.)
+      if (this.connecting) return;
       if (this._readyState !== WalletReadyState.Installed)
         throw new WalletNotReadyError();
 

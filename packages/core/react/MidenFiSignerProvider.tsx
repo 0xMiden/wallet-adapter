@@ -387,7 +387,13 @@ export const MidenFiSignerProvider: FC<MidenFiSignerProviderProps> = ({
 
   // Connect the adapter to the wallet
   const connect = useCallback(async () => {
-    if (isConnecting.current || isDisconnecting.current || connected) return;
+    // Do NOT early-return when already `connected`. The in-app wallet
+    // browser preserves a dApp's JS context across a park/restore, so a
+    // re-opened dApp is still `connected` — a repeat connect() must re-drive
+    // the adapter so the account is repopulated ("Connect Wallet works only
+    // once", 0xMiden/wallet#470). Concurrency is covered by the
+    // `isConnecting` ref here and the adapter's own in-flight guard.
+    if (isConnecting.current || isDisconnecting.current) return;
     if (!adapter) throw handleError(new WalletNotSelectedError());
 
     if (
@@ -410,7 +416,10 @@ export const MidenFiSignerProvider: FC<MidenFiSignerProviderProps> = ({
     try {
       await adapter.connect(privateDataPermission, network, allowedPrivateData);
     } catch (error: any) {
-      setName(null);
+      // Preserve a still-live session: a re-drive that fails while the
+      // adapter is still connected (e.g. wallet locked and the unlock prompt
+      // was dismissed) must not tear down the selected wallet (#470).
+      if (!adapter.connected) setName(null);
       throw error;
     } finally {
       setConnecting(false);
