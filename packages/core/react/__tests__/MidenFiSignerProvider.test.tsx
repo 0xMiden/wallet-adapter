@@ -105,6 +105,7 @@ import {
   MidenFiSignerProvider,
   useMidenFiWallet,
 } from '../MidenFiSignerProvider';
+import { useWallet } from '../useWallet';
 import { MidenWalletAdapter } from '@miden-sdk/miden-wallet-adapter-miden';
 
 // Test helpers
@@ -585,6 +586,55 @@ describe('MidenFiSignerProvider', () => {
       if (capturedContext?.accountConfig) {
         expect(capturedContext.accountConfig.customComponents).toBeUndefined();
       }
+    });
+  });
+
+  describe('useWallet under MidenFiSignerProvider (issue #177)', () => {
+    it('resolves useWallet() to the provider context, not DEFAULT_CONTEXT', async () => {
+      // A connected adapter so the provider populates address in its context.
+      mockAdapter = createMockAdapter({
+        connected: true,
+        publicKey: new Uint8Array(32).fill(0x42),
+        address: '0xtest-address',
+        readyState: 'Installed',
+      });
+
+      const consoleError = vi
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
+
+      // A UI-package-style consumer: reads `address` via useWallet().
+      const AddressConsumer = () => {
+        const { address } = useWallet();
+        return <div data-testid="address">{address ?? 'no-address'}</div>;
+      };
+
+      render(
+        <MidenFiSignerProvider>
+          <AddressConsumer />
+        </MidenFiSignerProvider>
+      );
+
+      // Let the auto-select + state sync effects settle.
+      await act(async () => {
+        await flushPromises();
+        await flushPromises();
+        await flushPromises();
+      });
+
+      // Bug: reading `address` off DEFAULT_CONTEXT logs the missing-provider error.
+      const missingProviderCalls = consoleError.mock.calls.filter((args) =>
+        args.some(
+          (a) =>
+            typeof a === 'string' && a.includes('without providing one')
+        )
+      );
+      expect(missingProviderCalls).toHaveLength(0);
+
+      // And the address flows through to the useWallet() consumer.
+      expect(screen.getByTestId('address').textContent).toBe('0xtest-address');
+
+      consoleError.mockRestore();
     });
   });
 

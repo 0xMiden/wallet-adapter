@@ -34,6 +34,7 @@ import {
 import type { NoteFilterTypes, AccountComponent } from '@miden-sdk/miden-sdk';
 import { MidenWalletAdapter } from '@miden-sdk/miden-wallet-adapter-miden';
 import { useLocalStorage } from './useLocalStorage';
+import { WalletContext as CanonicalWalletContext } from './useWallet';
 
 // TYPES
 // ================================================================================================
@@ -758,11 +759,19 @@ export const MidenFiSignerProvider: FC<MidenFiSignerProviderProps> = ({
     ]
   );
 
+  // Provide BOTH the provider-local WalletContext (kept for `useMidenFiWallet`'s
+  // exact type) and the canonical WalletContext from `./useWallet` (consumed by
+  // `useWallet()` and every UI-package component: WalletMultiButton,
+  // WalletConnectButton, WalletDisconnectButton, WalletModal). Without the
+  // canonical provider those components resolve to `DEFAULT_CONTEXT` and reading
+  // e.g. `address` logs "...WalletContext without providing one" (issue #177).
   return (
     <WalletContext.Provider value={walletContextValue}>
-      <SignerContext.Provider value={signerContext}>
-        {children}
-      </SignerContext.Provider>
+      <CanonicalWalletContext.Provider value={walletContextValue as any}>
+        <SignerContext.Provider value={signerContext}>
+          {children}
+        </SignerContext.Provider>
+      </CanonicalWalletContext.Provider>
     </WalletContext.Provider>
   );
 };
