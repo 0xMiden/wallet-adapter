@@ -147,15 +147,26 @@ export const WalletProvider: FC<WalletProviderProps> = ({
     return () => window.removeEventListener('beforeunload', listener);
   }, [isUnloading]);
 
-  // Handle the adapter's connect event
+  // Handle the adapter's connect event.
+  // Functional update bails out when values haven't changed so a repeat
+  // `connect` emit (e.g. re-driving an already-connected adapter, #470)
+  // doesn't force a redundant re-render.
   const handleConnect = useCallback(() => {
     if (!adapter) return;
-    setState((state) => ({
-      ...state,
-      connected: adapter.connected,
-      address: adapter.address,
-      publicKey: adapter.publicKey,
-    }));
+    setState((state) => {
+      if (
+        state.connected === adapter.connected &&
+        state.address === adapter.address &&
+        state.publicKey === adapter.publicKey
+      )
+        return state;
+      return {
+        ...state,
+        connected: adapter.connected,
+        address: adapter.address,
+        publicKey: adapter.publicKey,
+      };
+    });
   }, [adapter]);
 
   // Handle the adapter's disconnect event
@@ -231,7 +242,13 @@ export const WalletProvider: FC<WalletProviderProps> = ({
 
   // Connect the adapter to the wallet
   const connect = useCallback(async () => {
-    if (isConnecting.current || isDisconnecting.current || connected) return;
+    // Do NOT early-return when already `connected`. The in-app wallet
+    // browser preserves a dApp's JS context across a park/restore, so a
+    // re-opened dApp is still `connected` — a repeat connect() must re-drive
+    // the adapter so the account is repopulated ("Connect Wallet works only
+    // once", 0xMiden/wallet#470). Concurrency is covered by the
+    // `isConnecting` ref here and the adapter's own in-flight guard.
+    if (isConnecting.current || isDisconnecting.current) return;
     if (!adapter) throw handleError(new WalletNotSelectedError());
 
     if (
@@ -255,8 +272,10 @@ export const WalletProvider: FC<WalletProviderProps> = ({
     try {
       await adapter.connect(privateDataPermission, network, allowedPrivateData);
     } catch (error: any) {
-      // Clear the selected wallet
-      setName(null);
+      // Preserve a still-live session: a re-drive that fails while the
+      // adapter is still connected (e.g. wallet locked and the unlock prompt
+      // was dismissed) must not tear down the selected wallet (#470).
+      if (!adapter.connected) setName(null);
       // Rethrow the error, and handleError will also be called
       throw error;
     } finally {

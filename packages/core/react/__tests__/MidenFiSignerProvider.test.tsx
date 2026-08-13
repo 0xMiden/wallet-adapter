@@ -378,6 +378,44 @@ describe('MidenFiSignerProvider', () => {
 
       expect(typeof capturedContext.disconnect).toBe('function');
     });
+
+    it('re-drives adapter.connect() when connect() is called again while already connected (0xMiden/wallet#470)', async () => {
+      // The in-app browser preserves a dApp's JS context across a
+      // park/restore, so the provider can be `connected` when the user taps
+      // Connect again. A second connect() must re-drive the adapter (which
+      // repopulates the current account) instead of silently no-opping.
+      mockAdapter = createMockAdapter({
+        readyState: 'Installed',
+        connect: vi.fn().mockImplementation(async () => {
+          mockAdapter.connected = true;
+          mockAdapter.address = '0xabc';
+          mockAdapter.publicKey = new Uint8Array([1, 2, 3]);
+          mockAdapter.emit('connect', '0xabc');
+        }),
+      });
+
+      const wrapper = ({ children }: { children: React.ReactNode }) => (
+        <MidenFiSignerProvider>{children}</MidenFiSignerProvider>
+      );
+      const { result } = renderHook(() => useMidenFiWallet(), { wrapper });
+
+      // Let the provider mount + auto-select the single default wallet.
+      await act(async () => {
+        await flushPromises();
+        await flushPromises();
+      });
+
+      await act(async () => {
+        await result.current.connect();
+      });
+      expect(mockAdapter.connect).toHaveBeenCalledTimes(1);
+      expect(result.current.connected).toBe(true);
+
+      await act(async () => {
+        await result.current.connect();
+      });
+      expect(mockAdapter.connect).toHaveBeenCalledTimes(2);
+    });
   });
 
   describe('accountConfig', () => {
