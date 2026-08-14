@@ -207,6 +207,45 @@ describe('MidenWalletAdapter', () => {
       expect(result).toBe('tx-consume-1');
     });
 
+    it('requestSend rejects (does not resolve undefined) when the wallet returns no transactionId (0xMiden/wallet#314)', async () => {
+      const { adapter, mockWallet } = await createConnectedAdapter();
+      // The wallet resolved "successfully" but without a transaction id — meaning
+      // the transaction was never submitted; the dApp must see a rejection.
+      mockWallet.requestSend.mockResolvedValue({});
+      const errorHandler = vi.fn();
+      adapter.on('error', errorHandler);
+
+      await expect(
+        adapter.requestSend({
+          senderAddress: 's',
+          recipientAddress: 'r',
+          faucetId: 'f',
+          noteType: 'public' as const,
+          amount: 1,
+        })
+      ).rejects.toThrow(WalletTransactionError);
+      expect(errorHandler).toHaveBeenCalled();
+    });
+
+    it('requestConsume rejects when the wallet returns no transactionId (0xMiden/wallet#314)', async () => {
+      const { adapter, mockWallet } = await createConnectedAdapter();
+      mockWallet.requestConsume.mockResolvedValue({ transactionId: undefined });
+
+      await expect(
+        adapter.requestConsume({ faucetId: 'f', noteId: 'n', noteType: 'public' as const, amount: 1 })
+      ).rejects.toThrow(WalletTransactionError);
+    });
+
+    it('requestTransaction (custom) rejects when the wallet returns no transactionId (0xMiden/wallet#314)', async () => {
+      const { adapter, mockWallet } = await createConnectedAdapter();
+      mockWallet.requestTransaction.mockResolvedValue({});
+
+      await expect(
+        adapter.requestTransaction({ type: 'custom' as any, payload: {} as any })
+      ).rejects.toThrow(WalletTransactionError);
+      expect(mockWallet.requestTransaction).toHaveBeenCalled();
+    });
+
     it('requestTransaction routes a Consume transaction to wallet.requestConsume (issue #88)', async () => {
       const { adapter, mockWallet } = await createConnectedAdapter();
       const payload = {
