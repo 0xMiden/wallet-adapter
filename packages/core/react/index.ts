@@ -8,6 +8,8 @@ export {
   MidenFiSignerProvider,
   useMidenFiWallet,
   WalletContext,
+  SignerContext,
+  type SignerContextValue,
   type MidenFiSignerProviderProps,
   type SignerAccountType,
   type Wallet,

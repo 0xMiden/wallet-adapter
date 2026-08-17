@@ -104,7 +104,8 @@ import { SignerContext } from '@miden-sdk/react';
 import {
   MidenFiSignerProvider,
   useMidenFiWallet,
-} from '../MidenFiSignerProvider';
+  SignerContext as SignerContextFromIndex,
+} from '../index';
 import { useWallet } from '../useWallet';
 import { MidenWalletAdapter } from '@miden-sdk/miden-wallet-adapter-miden';
 
@@ -660,15 +661,16 @@ describe('MidenFiSignerProvider', () => {
         </MidenFiSignerProvider>
       );
 
-      await act(async () => {
-        await flushPromises();
-        await flushPromises();
-        await flushPromises();
-      });
-
       if (capturedContext?.storeName && capturedContext.storeName !== '') {
         expect(capturedContext.storeName).toContain('midenfi_');
       }
+    });
+  });
+
+  describe('SignerContext export (Issue #107)', () => {
+    it('exports SignerContext from index entrypoint and provides defined context', () => {
+      expect(SignerContextFromIndex).toBeDefined();
+      expect(SignerContextFromIndex).toBe(SignerContext);
     });
   });
 });
