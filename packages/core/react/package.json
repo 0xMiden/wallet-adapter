@@ -6,7 +6,8 @@
   "types": "dist/index.d.ts",
   "repository": {
     "type": "git",
-    "url": "https://github.com/demox-labs/miden-wallet-adapter.git"
+    "url": "git+https://github.com/0xMiden/wallet-adapter.git",
+    "directory": "packages/core/react"
   },
   "author": "Demox Labs",
   "license": "MIT",
@@ -38,5 +39,8 @@
     "@miden-sdk/react": {
       "optional": true
     }
+  },
+  "bugs": {
+    "url": "https://github.com/0xMiden/wallet-adapter/issues"
   }
 }
