@@ -12,7 +12,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/demox-labs/miden-wallet-adapter.git"
+    "url": "git+https://github.com/0xMiden/wallet-adapter.git",
+    "directory": "packages/core/base"
   },
   "author": "Demox Labs",
   "license": "MIT",
@@ -20,7 +21,14 @@
     "eventemitter3": "^5.0.1"
   },
   "devDependencies": {
+    "@miden-sdk/miden-sdk": "^0.15.1",
     "jsdom": "^24.0.0",
     "vitest": "^1.0.0"
+  },
+  "bugs": {
+    "url": "https://github.com/0xMiden/wallet-adapter/issues"
+  },
+  "peerDependencies": {
+    "@miden-sdk/miden-sdk": "^0.15.1"
   }
 }
