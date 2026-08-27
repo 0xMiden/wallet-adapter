@@ -128,7 +128,7 @@ import { useWallet } from '@miden-sdk/miden-wallet-adapter';
 function AssetsAndNotesComponent() {
   const { wallet, address, requestAssets, requestPrivateNotes } = useWallet();
 
-  const getAssetsAndNotes() = async () => {
+  const getAssetsAndNotes = async () => {
     if (!wallet || !address) return;
 
     // { faucetId: string, amount: string }[]
