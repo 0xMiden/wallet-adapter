@@ -59,19 +59,24 @@ export const WalletModal: FC<WalletModalProps> = ({
     return [installed, [...loadable, ...notDetected]];
   }, [wallets]);
 
-  const getStartedWallet = useMemo(() => {
-    return installedWallets.length
-      ? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        installedWallets[0]!
-      : wallets.find(
-          (wallet: { adapter: { name: WalletName } }) =>
-            wallet.adapter.name === MidenWalletName
-        ) ||
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          otherWallets[0]!;
+  const getStartedWallet = useMemo<Wallet | undefined>(() => {
+    if (installedWallets.length) {
+      return installedWallets[0];
+    }
+
+    return (
+      wallets.find(
+        (wallet: { adapter: { name: WalletName } }) =>
+          wallet.adapter.name === MidenWalletName
+      ) || otherWallets[0]
+    );
   }, [installedWallets, wallets, otherWallets]);
 
   const otherInstalledWallets = useMemo(() => {
+    if (!getStartedWallet) {
+      return installedWallets;
+    }
+
     return installedWallets.filter(
       (wallet) => wallet.adapter.name !== getStartedWallet.adapter.name
     );
@@ -194,70 +199,78 @@ export const WalletModal: FC<WalletModalProps> = ({
                 </svg>
               </button>
             </div>
-            {installedWallets.length ? (
-              <>
-                <div className="wallet-adapter-modal-content">
-                  Connect your Bread Wallet and start exploring its powerful
-                  features now!
-                  <hr />
-                </div>
-                <ul className="wallet-adapter-modal-list">
-                  <span className="wallet-adapter-modal-list-section-title">
-                    Recommended
-                  </span>
-                  <WalletListItem
-                    key={getStartedWallet.adapter.name}
-                    handleClick={(event) =>
-                      handleWalletClick(event, getStartedWallet.adapter.name)
-                    }
-                    wallet={getStartedWallet}
-                  />
-                  {(otherInstalledWallets.length > 0 ||
-                    otherWallets.length > 0) && (
-                    <>
-                      <hr />
-                      <span className="wallet-adapter-modal-list-section-title">
-                        Other wallets
-                      </span>
-                      {otherInstalledWallets.map((wallet) => (
-                        <WalletListItem
-                          key={wallet.adapter.name}
-                          handleClick={(event) =>
-                            handleWalletClick(event, wallet.adapter.name)
-                          }
-                          wallet={wallet}
-                        />
-                      ))}
-                      {otherWallets.map((wallet) => (
-                        <WalletListItem
-                          key={wallet.adapter.name}
-                          handleClick={(event) =>
-                            handleWalletClick(event, wallet.adapter.name)
-                          }
-                          wallet={wallet}
-                        />
-                      ))}
-                    </>
-                  )}
-                </ul>
-              </>
-            ) : (
-              <>
-                <div className="wallet-adapter-modal-middle">
-                  <DiscoverMidenMessage />
-                  <a
-                    href={getStartedWallet.adapter.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="wallet-adapter-modal-chrome-badge"
-                  >
-                    <img
-                      src="https://developer.chrome.com/static/docs/webstore/branding/image/HRs9MPufa1J1h5glNhut.png"
-                      alt="Available in the Chrome Web Store"
+            {getStartedWallet ? (
+              installedWallets.length ? (
+                <>
+                  <div className="wallet-adapter-modal-content">
+                    Connect your Bread Wallet and start exploring its powerful
+                    features now!
+                    <hr />
+                  </div>
+                  <ul className="wallet-adapter-modal-list">
+                    <span className="wallet-adapter-modal-list-section-title">
+                      Recommended
+                    </span>
+                    <WalletListItem
+                      key={getStartedWallet.adapter.name}
+                      handleClick={(event) =>
+                        handleWalletClick(event, getStartedWallet.adapter.name)
+                      }
+                      wallet={getStartedWallet}
                     />
-                  </a>
+                    {(otherInstalledWallets.length > 0 ||
+                      otherWallets.length > 0) && (
+                      <>
+                        <hr />
+                        <span className="wallet-adapter-modal-list-section-title">
+                          Other wallets
+                        </span>
+                        {otherInstalledWallets.map((wallet) => (
+                          <WalletListItem
+                            key={wallet.adapter.name}
+                            handleClick={(event) =>
+                              handleWalletClick(event, wallet.adapter.name)
+                            }
+                            wallet={wallet}
+                          />
+                        ))}
+                        {otherWallets.map((wallet) => (
+                          <WalletListItem
+                            key={wallet.adapter.name}
+                            handleClick={(event) =>
+                              handleWalletClick(event, wallet.adapter.name)
+                            }
+                            wallet={wallet}
+                          />
+                        ))}
+                      </>
+                    )}
+                  </ul>
+                </>
+              ) : (
+                <>
+                  <div className="wallet-adapter-modal-middle">
+                    <DiscoverMidenMessage />
+                    <a
+                      href={getStartedWallet.adapter.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="wallet-adapter-modal-chrome-badge"
+                    >
+                      <img
+                        src="https://developer.chrome.com/static/docs/webstore/branding/image/HRs9MPufa1J1h5glNhut.png"
+                        alt="Available in the Chrome Web Store"
+                      />
+                    </a>
+                  </div>
+                </>
+              )
+            ) : (
+              <div className="wallet-adapter-modal-middle">
+                <div className="wallet-adapter-modal-content">
+                  No wallets are available.
                 </div>
-              </>
+              </div>
             )}
           </div>
         </div>
